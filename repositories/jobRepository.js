@@ -1,54 +1,58 @@
 // repositories/jobRepository.js
 //
-// Job table access.
+// Prisma-based job data access.
 
-const db = require('./db');
+const prisma = require('./prismaClient');
 
 
 async function findAll() {
-  if (!db || !db.select) {
-    throw new Error('DB not configured. Set DATABASE_URL in .env before using repositories.');
-  }
 
-  return db('jobs').select('*').orderBy('created_at', 'desc');
+  return await prisma.job.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: {
+      recruiter: {
+        select: { id: true, name: true, email: true }
+      },
+      _count: { select: { applications: true } }
+    }
+  });
 }
 
 
 async function findById(id) {
-  if (!db || !db.select) {
-    throw new Error('DB not configured. Set DATABASE_URL in .env before using repositories.');
-  }
 
-  return db('jobs').where({ id }).first();
+  return await prisma.job.findUnique({
+    where: { id: Number(id) },
+    include: {
+      recruiter: { select: { id: true, name: true, email: true } },
+      applications: true
+    }
+  });
 }
 
 
-async function create(job) {
-  if (!db || !db.insert) {
-    throw new Error('DB not configured. Set DATABASE_URL in .env before using repositories.');
-  }
+async function create(jobData) {
 
-  const rows = await db('jobs').insert(job).returning('*');
-  return rows[0];
+  return await prisma.job.create({
+    data: jobData
+  });
 }
 
 
-async function update(id, payload) {
-  if (!db || !db.update) {
-    throw new Error('DB not configured. Set DATABASE_URL in .env before using repositories.');
-  }
+async function update(id, data) {
 
-  const rows = await db('jobs').where({ id }).update(payload).returning('*');
-  return rows[0];
+  return await prisma.job.update({
+    where: { id: Number(id) },
+    data
+  });
 }
 
 
 async function deleteJob(id) {
-  if (!db || !db.del) {
-    throw new Error('DB not configured. Set DATABASE_URL in .env before using repositories.');
-  }
 
-  return db('jobs').where({ id }).del();
+  return await prisma.job.delete({
+    where: { id: Number(id) }
+  });
 }
 
 

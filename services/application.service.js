@@ -1,6 +1,6 @@
 // services/application.service.js
 //
-// Business logic around applications (apply, list, status updates).
+// Logic for applying to jobs and updating statuses.
 
 const applicationRepo = require('../repositories/applicationRepository');
 const jobRepo = require('../repositories/jobRepository');
@@ -9,70 +9,60 @@ const userRepo = require('../repositories/userRepository');
 
 async function applyToJob({ jobId, candidateId, resumePath }) {
 
-
-  // Basic checks
-  const job = await jobRepo.findById(jobId);
-
+  // validate job exists
+  const job = await jobRepo.findById(Number(jobId));
   if (!job) {
     const err = new Error('Job not found');
     err.status = 404;
     throw err;
   }
 
-
-  const candidate = await userRepo.findById(candidateId);
-
+  // validate candidate
+  const candidate = await userRepo.findById(Number(candidateId));
   if (!candidate || candidate.role !== 'candidate') {
     const err = new Error('Only candidates can apply');
     err.status = 403;
     throw err;
   }
 
-
-  // Create application record
-  const application = {
-    job_id: jobId,
-    candidate_id: candidateId,
-    resume_path: resumePath,
-    status: 'applied'
+  // create application
+  const app = {
+    jobId: Number(jobId),
+    candidateId: Number(candidateId),
+    resumeUrl: resumePath || candidate.resumePath || '',
+    status: 'PENDING'
   };
 
-
-  const created = await applicationRepo.create(application);
-
+  const created = await applicationRepo.create(app);
 
   return created;
 }
 
 
 async function getApplicationsByCandidate(candidateId) {
-  return applicationRepo.findByCandidate(candidateId);
+  return await applicationRepo.findByCandidate(Number(candidateId));
 }
 
 
 async function updateStatus(recruiterId, applicationId, status) {
 
-
-  // Validate recruiter owns the job for this application
-  const app = await applicationRepo.findById(applicationId);
-
+  // fetch application
+  const app = await applicationRepo.findById(Number(applicationId));
   if (!app) {
     const err = new Error('Application not found');
     err.status = 404;
     throw err;
   }
 
-
-  const job = await jobRepo.findById(app.job_id);
-
-  if (!job || job.posted_by !== recruiterId) {
+  // verify recruiter owns the job
+  const job = await jobRepo.findById(Number(app.jobId));
+  if (!job || job.recruiterId !== Number(recruiterId)) {
     const err = new Error('Forbidden: cannot update this application');
     err.status = 403;
     throw err;
   }
 
-
-  const updated = await applicationRepo.updateStatus(applicationId, status);
+  const updated = await applicationRepo.updateStatus(Number(applicationId), status);
 
   return updated;
 }
