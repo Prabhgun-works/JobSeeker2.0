@@ -54,6 +54,12 @@ async function deleteJob(id) {
     where: { id: Number(id) }
   });
 }
+async function findApplicantsByJob(jobId) {
+  return prisma.application.findMany({
+    where: { jobId: parseInt(jobId) },
+    include: { candidate: true } // assumes "candidateId" relation exists in Application model
+  });
+}
 
 
-module.exports = { findAll, findById, create, update, delete: deleteJob };
+module.exports = { findApplicantsByJob,findAll, findById, create, update, delete: deleteJob };

@@ -19,7 +19,6 @@ const app = express();
 // --- Global middleware
 
 app.use(helmet());
-
 app.use(cors({
   origin: config.FRONTEND_ORIGIN,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -29,6 +28,7 @@ app.use(cors({
 
 // Parse JSON bodies.
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files statically (so resumes can be downloaded/viewed in dev).
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

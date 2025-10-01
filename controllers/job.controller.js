@@ -2,6 +2,9 @@
 //
 // Job controllers: minimal, readable, and delegating to service layer.
 
+
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const jobService = require('../services/job.service');
 const { ok, created } = require('../utils/response');
 
@@ -28,20 +31,31 @@ async function viewJob(req, res, next) {
 
 
 async function createJob(req, res, next) {
+  console.log(req.user, req.body); // helpful for debugging
+
   try {
-    const payload = req.body;
+    const { title, description, company, location } = req.body;
 
-    // req.user is attached by authMiddleware
-    const recruiterId = req.user.id;
+    if (!title || !description || !company || !location) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
 
-    const job = await jobService.createJob(recruiterId, payload);
+    const job = await prisma.job.create({
+      data: {
+        title,
+        description,
+        company,
+        location,
+        recruiterId: req.user.id,
+      },
+    });
 
-    return created(res, job, 'Job created');
+    return res.status(201).json({ message: 'Job created', data: job });
   } catch (err) {
-    return next(err);
+    console.error('Error in createJob:', err);
+    return res.status(500).json({ message: 'Internal Server Error', error: err.message });
   }
 }
-
 
 async function updateJob(req, res, next) {
   try {
@@ -70,6 +84,14 @@ async function deleteJob(req, res, next) {
     return next(err);
   }
 }
+async function getApplicants(req, res, next) {
+  try {
+    const { id } = req.params;
+    const applicants = await jobRepository.findApplicantsByJob(id);
+    res.json({ message: "Applicants fetched", data: applicants });
+  } catch (err) {
+    next(err);
+  }
+}
 
-
-module.exports = { listJobs, viewJob, createJob, updateJob, deleteJob };
+module.exports = { getApplicants, listJobs, viewJob, createJob, updateJob, deleteJob };

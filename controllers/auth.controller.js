@@ -12,10 +12,10 @@ async function register(req, res, next) {
     const payload = req.body;
 
     const result = await authService.register(payload);
+    console.log("Login payload:", req.body);
 
     // created user + token
     return res.status(201).json({ message: 'User registered', data: result });
-
   } catch (err) {
     return next(err);
   }
@@ -29,6 +29,7 @@ async function login(req, res, next) {
     const { email, password } = req.body;
 
     const result = await authService.login({ email, password });
+    console.log("Login payload:", req.body);
 
     return res.status(200).json({ message: 'Login successful', data: result });
 
