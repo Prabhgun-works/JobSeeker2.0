@@ -1,0 +1,7 @@
+import React, { createContext, useReducer, useEffect } from 'react';
+import authService from '../services/authService';
+import { useNavigate } from 'react-router-dom';
+const initialState = { user:null, token:null, loading:true };
+const AuthContext = createContext(initialState);
+function reducer(state, action){ switch(action.type){ case 'LOGIN': return {...state, user: action.payload.user, token: action.payload.token, loading:false}; case 'LOGOUT': return { user:null, token:null, loading:false }; default: return state; } }
+export function AuthProvider({children}){ const [state, dispatch]=useReducer(reducer, initialState); const navigate = useNavigate(); useEffect(()=>{ const token = localStorage.getItem('token'); const user = localStorage.getItem('user'); if(token && user) dispatch({type:'LOGIN', payload:{token, user: JSON.parse(user)}}); else dispatch({type:'LOGOUT'}); },[]); async function login(email,password){ const res = await authService.login({email,password}); const { token, user } = res.data.data; localStorage.setItem('token', token); localStorage.setItem('user', JSON.stringify(user)); dispatch({ type:'LOGIN', payload:{ token, user } }); if(user.role === 'recruiter') navigate('/dashboard'); else navigate('/dashboard'); return res; } function logout(){ localStorage.removeItem('token'); localStorage.removeItem('user'); dispatch({ type:'LOGOUT' }); navigate('/login'); } return <AuthContext.Provider value={{ state, login, logout }}>{children}</AuthContext.Provider>; } export default AuthContext;

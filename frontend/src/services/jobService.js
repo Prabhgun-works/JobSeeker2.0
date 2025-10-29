@@ -1,0 +1,1 @@
+import apiClient from '../api/apiClient'; const jobService = { getJobs: ()=>apiClient.get('/jobs'), getJob: (id)=>apiClient.get(`/jobs/${id}`), createJob: (data)=>apiClient.post('/jobs', data) }; export default jobService;

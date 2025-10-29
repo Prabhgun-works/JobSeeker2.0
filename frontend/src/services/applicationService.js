@@ -1,0 +1,1 @@
+import apiClient from '../api/apiClient'; const applicationService = { applyToJob: (jobId, formData)=>apiClient.post(`/applications/${jobId}/apply`, formData), myApplications: ()=>apiClient.get('/applications'), updateStatus: (id,data)=>apiClient.put(`/applications/${id}/status`, data) }; export default applicationService;
